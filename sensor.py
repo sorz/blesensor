@@ -31,7 +31,6 @@ from typing import Optional, Dict, List
 
 from advertisement import Advertisement
 from service import Application, Service, Characteristic, Descriptor
-from gpiozero import CPUTemperature
 
 GATT_CHRC_IFACE = "org.bluez.GattCharacteristic1"
 MEASUREMENT_STALED_SECS = 5000
@@ -64,8 +63,12 @@ class SensorService(Service):
     def read_measurement(self) -> Optional[Dict[str, int]]:
         if not self.MEASUREMENT_JSON.is_file():
             return
-        with open(self.MEASUREMENT_JSON) as f:
-            m = json.load(f)
+        try:
+            with open(self.MEASUREMENT_JSON) as f:
+                m = json.load(f)
+        except (IOError, ValueError) as e:
+            print('fail to read measurement:', e)
+            return
         if time.time() - m.pop('time') > MEASUREMENT_STALED_SECS:
             return
         return m
